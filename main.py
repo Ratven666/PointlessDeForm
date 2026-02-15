@@ -1,68 +1,61 @@
 from app.base.scan.Scan import Scan
 
-
-
-
-############
-
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 
 def scan_to_numpy(scan):
-    """Преобразуем Scan в массив N x 3."""
-    pts = np.array([[p.x, p.y, p.z] for p in scan])
-    return pts
+    return np.array([[p.x, p.y, p.z] for p in scan])
 
-def compute_normals(points_xyz, k=20):
+
+from sklearn.cluster import DBSCAN
+
+def dbscan_cluster_points(scan, eps=0.01, min_samples=10):
     """
-    points_xyz: np.ndarray (N, 3)
-    k: число соседей для оценки нормали
-    return: np.ndarray (N, 3) нормали (единичные векторы)
+    scan        – ваш объект Scan
+    eps         – радиус окрестности (в тех же единицах, что и координаты)
+    min_samples – минимальное число точек в окрестности для ядра
     """
-    N = points_xyz.shape[0]
-    normals = np.zeros((N, 3), dtype=np.float64)
+    X = scan_to_numpy(scan)  # shape (N, 3)
 
-    # kNN по евклиду
-    nn = NearestNeighbors(n_neighbors=min(k, N), algorithm='kd_tree')
-    nn.fit(points_xyz)
-    distances, indices = nn.kneighbors(points_xyz)
+    db = DBSCAN(eps=eps, min_samples=min_samples)
+    labels = db.fit_predict(X)  # shape (N,)
 
-    for i in range(N):
-        neigh_idx = indices[i]
-        neigh_pts = points_xyz[neigh_idx]
+    # labels = -1 для шума, 0,1,2,... – кластеры
+    return labels
 
-        # центрируем
-        centroid = neigh_pts.mean(axis=0)
-        centered = neigh_pts - centroid
 
-        # PCA через SVD: наименьшее собственное значение даёт нормаль
-        # (u, s, vh) = SVD(centered), нормаль = последний вектор vh
-        _, _, vh = np.linalg.svd(centered, full_matrices=False)
-        n = vh[-1, :]
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
-        # нормализуем
-        n_norm = np.linalg.norm(n)
-        if n_norm > 0:
-            n = n / n_norm
+def plot_dbscan_clusters_3d(scan, labels):
+    X = scan_to_numpy(scan)
+    x, y, z = X[:, 0], X[:, 1], X[:, 2]
 
-        normals[i] = n
+    unique_labels = np.unique(labels)
+    colors = plt.cm.get_cmap("tab20", len(unique_labels))
 
-    return normals
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-def compute_scan_normals(scan, k=20):
-    """
-    Возвращает dict: point -> normal (np.array shape (3,))
-    или список нормалей в том же порядке, что и scan.
-    """
-    pts = scan_to_numpy(scan)
-    normals = compute_normals(pts, k=k)
+    for k in unique_labels:
+        mask = labels == k
+        if k == -1:
+            ax.scatter(x[mask], y[mask], z[mask], s=1, c='k', alpha=0.1, label='noise')
+        else:
+            ax.scatter(x[mask], y[mask], z[mask], s=5, color=colors(k), label=f'cluster {k}')
 
-    # если хотите положить нормаль внутрь ScanPoint
-    for p, n in zip(scan, normals):
-        # добавьте в ScanPoint атрибут, если его нет
-        setattr(p, "normal", n)
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.legend(loc='best', markerscale=4)
+    plt.tight_layout()
+    plt.show()
 
-    return normals
+    return fig, ax
+
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -71,7 +64,13 @@ if __name__ == "__main__":
 
     print(scan)
     # scan.plot()
+    labels = dbscan_cluster_points(scan, eps=0.02, min_samples=5)
 
-    normals = compute_scan_normals(scan, k=30)
+    # можно сохранить метки в ScanPoint
+    for p, lbl in zip(scan, labels):
+        setattr(p, "cluster_id", int(lbl))
 
-    print(normals)
+    # for p in scan:
+    #     print(p, p.cluster_id)
+
+    plot_dbscan_clusters_3d(scan, labels)

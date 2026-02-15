@@ -3,6 +3,7 @@ from app.base.scan.ScanPoint import ScanPoint
 from app.base.scan.exporters.ScanExportersToTxt import ScanExportersToTxt
 from app.base.scan.parsers.ScanParserFactory import ScanParserFactory
 from app.base.scan.plotters.ScanPlotterMPL import ScanPlotterMPL
+from app.base.scan.utils.ScanNormalsCalculator import ScanNormalsCalculator
 
 
 class Scan:
@@ -39,9 +40,16 @@ class Scan:
             self.add_point(s_point)
         return self
 
-    def import_points_from_file(self, file_path, parser=ScanParserFactory):
+    def compute_normals(self, *args, normals_calculator=ScanNormalsCalculator, **kwargs):
+        snc = normals_calculator(scan=self)
+        normals =snc.compute_normals(*args, **kwargs)
+        return normals
+
+    def import_points_from_file(self, file_path, parser=ScanParserFactory, compute_normals=True):
         parser = parser(file_path)
         parser.parse(scan=self)
+        if compute_normals:
+            self.compute_normals()
         return self
 
     def export_points_from_file(self, file_path, parser=ScanExportersToTxt):
@@ -102,12 +110,12 @@ class Scan:
 
 
 if __name__ == "__main__":
-    scan = Scan("Scan1")
-    print(scan)
-    # scan.import_points_from_file(file_path=r"../../src/PCLD_1.txt")
-    scan.import_points_from_file(file_path=r"../../src/PCLD_1.las")
-    print(scan)
+    scan = Scan("l1")
+    # print(scan)
+    scan.import_points_from_file(file_path=r"../../../src/L1.las")
+    # print(scan)
 
-    scan.plot()
+    scan.plot(plotter=ScanPlotterMPL)
+
     for point in scan:
          print(point)
