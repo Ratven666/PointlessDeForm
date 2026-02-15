@@ -1,0 +1,4 @@
+laspy~=2.7.0
+matplotlib~=3.10.8
+numpy~=2.4.2
+scikit-learn~=1.8.0
