@@ -1,33 +1,26 @@
 import numpy as np
-from app.base.Plane import Plane
+
 from app.base.scan.Scan import Scan
+from app.base.scan.plane_fitters.PlaneFitterABC import PlaneFitterABC
+
+class PlaneL1Fitter(PlaneFitterABC):
 
 
-class ScanL1PlaneFitter:
-    """
-    Вписывает одну плоскость Ax + By + Cz + D = 0 во весь скан,
-    минимизируя сумму модулей расстояний до плоскости (L1).
-    Реализовано через итеративно взвешенные НСК (IRLS).
-    """
-
-    def __init__(self, scan: Scan,
-                 eps=1e-6,
-                 max_iter=50,
-                 tol=1e-6):
+    def __init__(self, scan: Scan):
         """
         eps      – малый параметр для стабилизации весов (деление на |d|+eps).
         max_iter – максимум итераций IRLS.
         tol      – критерий остановки по изменению нормали и D.
         """
-        self.scan = scan
-        self.eps = eps
-        self.max_iter = max_iter
-        self.tol = tol
+        super().__init__(scan)
+        self.eps = None
+        self.max_iter = None
+        self.tol = None
 
-    def _scan_to_numpy(self):
-        """Все точки скана в np.ndarray (N,3)."""
-        pts = np.array([[p.x, p.y, p.z] for p in self.scan], dtype=float)
-        return pts
+    def fit_plane(self, *args, eps=1e-6, max_iter=50, tol=1e-6, **kwargs):
+        self.eps, self.max_iter, self.tol = eps, max_iter, tol
+        normal, point_on_plane, d = self._fit_l1()
+        return self.scan, normal, point_on_plane, d
 
     def _initial_l2_plane(self, pts):
         """Стартовое решение – обычный НСК (PCA)."""
@@ -62,7 +55,7 @@ class ScanL1PlaneFitter:
         d = -np.dot(normal, centroid)
         return normal, d
 
-    def fit_l1(self):
+    def _fit_l1(self):
         """
         Строит плоскость по всем точкам скана (L1).
         Возвращает Plane.
@@ -91,8 +84,10 @@ class ScanL1PlaneFitter:
             if max(delta_n, delta_d) < self.tol:
                 break
 
-        plane = Plane(normal=normal, point_on_plane=self._compute_point_on_plane(normal, d), d=d)
-        return plane
+        normal = normal
+        point_on_plane = self._compute_point_on_plane(normal, d)
+        d = d
+        return normal, point_on_plane, d
 
     @staticmethod
     def _compute_point_on_plane(normal, d):
@@ -111,16 +106,4 @@ class ScanL1PlaneFitter:
         else:
             x = -d / A
             return np.array([x, 0.0, 0.0], dtype=float)
-
-if __name__ == "__main__":
-    scan = Scan("L1_0")
-    scan.import_points_from_file(file_path="../../../../src/l1_label_0.txt")
-    # scan.plot()
-
-    sf = ScanL1PlaneFitter(scan)
-    plane = sf.fit_l1()
-    print(plane)
-
-    # fig, ax = scan.plot()
-
 

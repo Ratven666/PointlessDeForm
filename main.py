@@ -1,35 +1,24 @@
-from app.base.scan.Scan import Scan
-from app.base.scan.filters.ScanFilterByDBSCAN import ScanFilterByDBSCAN
-from app.base.scan.plotters.ScanPlotterWithLabelsMPL import ScanPlotterWithLabelsMPL
-from app.base.scan.utils.ScanNormalsDirectionClassifier import ScanNormalsDirectionClassifier
-from app.base.scan.utils.ScanSplitterByLabels import ScanSplitterByLabels
+import os
 
-scan = Scan("l1")
+from app.util.CrossPointExacter import CrossPointExacter
 
-scan.import_points_from_file(file_path=r"src/L1.las")
-# scan.import_points_from_file(file_path=r"src/L1_raw.txt")
+base_path = "data/200226/сканер/lazpredobr"
+target_path = "src"
 
-scan.compute_normals(k=8)
-s_dbscan_c = ScanNormalsDirectionClassifier(scan)
-s_dbscan_c.classify_normals(n_classes=3, unify_hemisphere=True)
+files = [
+    f for f in os.listdir(base_path)
+    if os.path.isfile(os.path.join(base_path, f))
+]
 
-# scan.plot(plotter=ScanPlotterWithLabelsMPL)
-
-scans = ScanSplitterByLabels(scan).split()
-
-for scan in scans.values():
-    scan.filter_scan(filter_cls=ScanFilterByDBSCAN,
-                     eps=0.01,
-                     min_samples=5,
-                     min_cluster_size=100,
-                     )
-    print(scan)
-    scan.plot(plotter=ScanPlotterWithLabelsMPL)
-    scans = ScanSplitterByLabels(scan).split()
-    answer = float(input("Number_of_claster? (y/n): "))
-    for scan in scans.values():
-        point = scan._points[0]
-        if point.labels == answer:
-            scan.export_points_from_file(file_path=f"src/{scan.name}.txt")
-            scan.plot(plotter=ScanPlotterWithLabelsMPL)
-            break
+with open(os.path.join(target_path, "cross_points.txt"), "a") as write_file:
+    write_file.write(f"Scan_name, X, Y, Z\n")
+    for file in files:
+        file_path = os.path.join(base_path, file)
+        cpe = CrossPointExacter(file_path=file_path, eps=0.005)
+        cpe.calculate_planes()
+        for plane in cpe.planes:
+            print(plane)
+        x = cpe.calculate_intersect_point()
+        print(x)
+        res_str = cpe.get_result_str()
+        write_file.write(f"{res_str}\n")

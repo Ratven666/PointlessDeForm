@@ -34,6 +34,7 @@ class Plane:
     @property
     def D(self):
         return self.d
+
     @property
     def equation(self):
         """Коэффициенты (A,B,C,D)."""
@@ -59,4 +60,4 @@ class Plane:
 
     def __repr__(self):
         A, B, C, D = self.equation
-        return f"Plane(A={A:.6f}, B={B:.6f}, C={C:.6f}, D={D:.6f})"
+        return f"{self.__class__.__name__} (A={A:.6f}, B={B:.6f}, C={C:.6f}, D={D:.6f})"
