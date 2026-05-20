@@ -1,5 +1,3 @@
-# app/base/scan/utils/ScanPlane.py
-
 import numpy as np
 
 

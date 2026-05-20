@@ -12,12 +12,18 @@ from app.base.scan.plane_fitters.PlaneLSMFitter import PlaneLSMFitter
 from app.base.scan.plotters.ScanPlotterWithLabelsMPL import ScanPlotterWithLabelsMPL
 from app.base.scan.utils.ScanNormalsDirectionClassifier import ScanNormalsDirectionClassifier
 from app.base.scan.utils.ScanSplitterByLabels import ScanSplitterByLabels
+from app.util.CrossPoint import CrossPoint
 
 
 class CrossPointExacter:
 
-    def __init__(self, file_path: str, show_scans=True, labels=None, eps=0.01):
+    def __init__(self, file_path: str,
+                 choose_scan_directly_from_dbscan: bool = True,
+                 show_scans=True,
+                 labels=None,
+                 eps=0.01):
         self.base_scan = self.__init_scan(file_path)
+        self.choose_scan_directly_from_dbscan = choose_scan_directly_from_dbscan
         self.plane_scans = self.__separate_plane_scans(show_scans=show_scans,
                                                        labels=labels,
                                                        eps=eps)
@@ -30,8 +36,8 @@ class CrossPointExacter:
         scan = Scan(scan_name)
         scan.import_points_from_file(file_path)
         scan.compute_normals(k=8)
-        s_dbscan_c = ScanNormalsDirectionClassifier(scan)
-        s_dbscan_c.classify_normals(n_classes=3, unify_hemisphere=True)
+        s_normals_c = ScanNormalsDirectionClassifier(scan)
+        s_normals_c.classify_normals(n_classes=3, unify_hemisphere=True)
         return scan
 
     def __separate_plane_scans(self, show_scans, eps, labels=None):
@@ -52,7 +58,8 @@ class CrossPointExacter:
         plane_scan = []
         for idx, scan in enumerate(scans.values()):
             label = labels[idx] if labels is not None else None
-            scan = choose_plane_scan(scan, label=label)
+            if self.choose_scan_directly_from_dbscan:
+                scan = choose_plane_scan(scan, label=label)
             plane_scan.append(scan)
             if show_scans:
                 scan.plot()
@@ -75,6 +82,46 @@ class CrossPointExacter:
             scan_planes.append(scan_plane)
         self.planes = scan_planes
         return scan_planes
+
+    def has_parallel_subset(self, angle_tol_rad=np.deg2rad(10.0), min_group_size=2):
+        """
+        planes          – iterable[Plane]
+        angle_tol_rad   – допуск по углу между нормалями (радианы)
+        min_group_size  – минимальный размер подмножества параллельных плоскостей
+        Возвращает True, если существует подмножество из min_group_size
+        (или больше) плоскостей, которые попарно параллельны в пределах допуска.
+        """
+        planes = list(self.planes)
+        n = len(planes)
+        if n < min_group_size:
+            return False
+        normals = np.array([p.normal for p in self.planes], dtype=float)
+        # нормируем нормали на всякий случай
+        norms = np.linalg.norm(normals, axis=1, keepdims=True)
+        normals = normals / norms
+        # косинус допуска
+        cos_tol = np.cos(angle_tol_rad)
+        # пытаемся сгруппировать нормали по направлению (с учётом ±)
+        groups = []
+        used = np.zeros(n, dtype=bool)
+        for i in range(n):
+            if used[i]:
+                continue
+            # создаём новую группу с базовой нормалью
+            base = normals[i]
+            group = [i]
+            used[i] = True
+            # ищем все нормали, параллельные base в пределах допуска
+            dots = normals @ base  # скалярные произведения
+            # параллельность с учётом направления: |cos(theta)| ≈ 1
+            mask = np.abs(dots) >= cos_tol
+            idxs = np.where(mask & (~used))[0]
+            for j in idxs:
+                group.append(j)
+                used[j] = True
+            if len(group) >= min_group_size:
+                return True
+        return False
 
     def calculate_intersect_point(self):
         """
@@ -102,7 +149,11 @@ class CrossPointExacter:
             raise ValueError("Плоскости не имеют единственной точки пересечения (детерминант ~ 0)")
         # Решаем линейную систему
         x = np.linalg.solve(A, b)  # shape (3,)
-        self.cross_point = Point(x=x[0], y=x[1], z=x[2])
+        self.cross_point = CrossPoint(name=self.base_scan.name,
+                                      x=x[0], y=x[1], z=x[2])
+        plane_mses = [plane.mse for plane in self.planes]
+        self.cross_point.load_mses(plane_mses=plane_mses)
+        self.cross_point.status = "BAD" if self.has_parallel_subset() else "GOOD"
         return self.cross_point
 
     def get_result_str(self):
