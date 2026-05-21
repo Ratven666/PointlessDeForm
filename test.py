@@ -1,82 +1,28 @@
-import numpy as np
+from app.base.scan.plane_fitters.PlaneL1Fitter import PlaneL1Fitter
+from app.util.batch_cross_points import BatchCrossPointProcessor
 
-def has_parallel_subset(planes, angle_tol_rad=np.deg2rad(1.0), min_group_size=2):
-    """
-    planes          – iterable[Plane]
-    angle_tol_rad   – допуск по углу между нормалями (радианы)
-    min_group_size  – минимальный размер подмножества параллельных плоскостей
-    Возвращает True, если существует подмножество из min_group_size
-    (или больше) плоскостей, которые попарно параллельны в пределах допуска.
-    """
-    planes = list(planes)
-    n = len(planes)
-    if n < min_group_size:
-        return False
-    normals = np.array([p.normal for p in planes], dtype=float)
-    # нормируем нормали на всякий случай
-    norms = np.linalg.norm(normals, axis=1, keepdims=True)
-    normals = normals / norms
-    # косинус допуска
-    cos_tol = np.cos(angle_tol_rad)
-    # пытаемся сгруппировать нормали по направлению (с учётом ±)
-    groups = []
-    used = np.zeros(n, dtype=bool)
-    for i in range(n):
-        if used[i]:
-            continue
-        # создаём новую группу с базовой нормалью
-        base = normals[i]
-        group = [i]
-        used[i] = True
-        # ищем все нормали, параллельные base в пределах допуска
-        dots = normals @ base  # скалярные произведения
-        # параллельность с учётом направления: |cos(theta)| ≈ 1
-        mask = np.abs(dots) >= cos_tol
-        idxs = np.where(mask & (~used))[0]
-        for j in idxs:
-            group.append(j)
-            used[j] = True
-        if len(group) >= min_group_size:
-            return True
-    return False
+processor = BatchCrossPointProcessor(
+    input_dir="data/8_floors_wall/scan_2334_filt",
+    output_dir="data/8_floors_wall/output",
+    extensions=(".las", ".laz"),
+    max_ellipsoid_axis=0.05,   # например 5 см
+    eps=0.05,
+    show_scans=False,
+    choose_scan_directly_from_dbscan=True,
+    mse_threshold=0.0001,
+    max_iteration=20,
+    k_sigma=2.0,
+    base_fitter=PlaneL1Fitter,
+)
 
-def parallel_groups(planes, angle_tol_rad=np.deg2rad(1.0), min_group_size=2, return_indices=False):
-    """
-    Возвращает список групп параллельных плоскостей.
-    Каждая группа – список плоскостей (или индексов, если return_indices=True).
-    """
-    planes = list(planes)
-    n = len(planes)
-    if n < min_group_size:
-        return []
-    normals = np.array([p.normal for p in planes], dtype=float)
-    norms = np.linalg.norm(normals, axis=1, keepdims=True)
-    normals = normals / norms
-    cos_tol = np.cos(angle_tol_rad)
-    groups = []
-    used = np.zeros(n, dtype=bool)
-    for i in range(n):
-        if used[i]:
-            continue
-        base = normals[i]
-        group = [i]
-        dots = normals @ base
-        mask = np.abs(dots) >= cos_tol
-        idxs = np.where(mask & (~used))[0]
-        for j in idxs:
-            group.append(j)
-        if len(group) >= min_group_size:
-            for j in group:
-                used[j] = True
-            if return_indices:
-                groups.append(group)
-            else:
-                groups.append([planes[j] for j in group])
-    return groups
+result = processor.run()
 
+df_all = result["df_all"]
+df_good = result["df_good"]
+df_good_filtered = result["df_good_filtered"]
+df_errors = result["df_errors"]
 
-planes = [Plane(...), Plane(...), ...]
-if has_parallel_subset(planes, angle_tol_rad=np.deg2rad(2), min_group_size=3):
-    print("Есть хотя бы три параллельные плоскости в пределах 2°.")
-else:
-    print("Нет такого подмножества.")
+print("Всего обработано:", len(df_all))
+print("Хороших точек:", len(df_good))
+print("Хороших после фильтра по эллипсоиду:", len(df_good_filtered))
+print("Ошибок:", len(df_errors))

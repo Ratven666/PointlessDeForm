@@ -92,17 +92,26 @@ def save_sub_scans(sub_scans: dict, parent_scan, base_dir: str = "."):
     return parent_dir
 
 if __name__ == '__main__':
-    file_path = "../../data/8_floors_wall/2334_tochki.txt"
+    point_path_1 = "../../data/8_floors_wall/2334_tochki.txt"
+    point_path_2 = "../../data/8_floors_wall/2335_tochki.txt"
+    point_path_3 = "../../data/8_floors_wall/2336_tochki.txt"
 
-    point_list = get_named_point_list(file_path)
+    points_paths = [point_path_1, point_path_2, point_path_3]
+
+    # point_list = get_named_point_list(file_path)
     # print(*point_list, sep='\n')
+    scan_names_1 = "scan_2334_filt"
+    scan_names_2 = "scan_2335_filt"
+    scan_names_3 = "scan_2336_filt"
 
-    scan_names = "scan_2334_filt", "scan_2335_filt", "scan_2336_filt"
-    for scan_name in scan_names:
-        scan = Scan(scan_name=scan_name)
-        scan.import_points_from_file(os.path.join("..", "..", "data", "8_floors_wall", f"{scan_name}.txt"))
-        print(scan)
+    scan_names = [scan_names_1, scan_names_2, scan_names_3]
+
+    for idx in range(len(scan_names)):
+        scan = Scan(scan_name=scan_names[idx])
+        scan.import_points_from_file(os.path.join("..", "..", "data", "8_floors_wall", f"{scan_names[idx]}.txt"))
+
+        point_list = get_named_point_list(points_paths[idx])
 
         sub_scans = split_scan_by_points(scan, point_list, cube_size=0.6)
-
+        print(scan)
         save_sub_scans(sub_scans, scan)

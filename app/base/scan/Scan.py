@@ -108,6 +108,67 @@ class Scan:
                                          point=point)
         return borders
 
+    def transform_scan(self, transformation, inplace=False, rotate_normals=True, scan_name=None):
+        """
+        Применяет пространственную трансформацию ко всем точкам скана.
+
+        Parameters
+        ----------
+        transformation : SpatialTransformation
+            Объект с полями R (3x3) и t (3,).
+        inplace : bool
+            Если True, изменяет текущий Scan.
+            Если False, возвращает новый Scan.
+        rotate_normals : bool
+            Если True, поворачивает normals у ScanPoint через R.
+        scan_name : str | None
+            Имя нового скана, если inplace=False.
+
+        Returns
+        -------
+        Scan
+            Трансформированный скан.
+        """
+        import numpy as np
+
+        R = np.asarray(transformation.R, dtype=float)
+        t = np.asarray(transformation.t, dtype=float)
+
+        if inplace:
+            target_scan = self
+            target_scan._points = []
+            target_scan.borders = {
+                "x_min": None, "x_max": None,
+                "y_min": None, "y_max": None,
+                "z_min": None, "z_max": None,
+            }
+        else:
+            target_scan = Scan(scan_name or f"{self.name}_transformed")
+
+        for point in self:
+            xyz = np.array([point.x, point.y, point.z], dtype=float)
+            xyz_new = R @ xyz + t
+
+            normals_new = None
+            if rotate_normals and getattr(point, "normals", None) is not None:
+                normals = np.asarray(point.normals, dtype=float)
+                normals_new = R @ normals
+
+                norm = np.linalg.norm(normals_new)
+                if norm > 0:
+                    normals_new = normals_new / norm
+
+            new_point = ScanPoint(
+                x=float(xyz_new[0]),
+                y=float(xyz_new[1]),
+                z=float(xyz_new[2]),
+                color=getattr(point, "color", (0, 0, 0)),
+                normals=normals_new,
+            )
+            target_scan.add_point(new_point)
+
+        return target_scan
+
 
 if __name__ == "__main__":
     scan = Scan("l1")

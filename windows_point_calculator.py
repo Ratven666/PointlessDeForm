@@ -1,33 +1,28 @@
-from app.util.CrossPointExacter import CrossPointExacter
+from app.base.scan.plane_fitters.PlaneL1Fitter import PlaneL1Fitter
+from app.util.batch_cross_points import BatchCrossPointProcessor
 
-# FILE_PATH = "data/8_floors_wall/test_window/2_1_vp_good.txt"
-vl_path = "data/8_floors_wall/test_window/8_6_vl.txt"
-vp_path = "data/8_floors_wall/test_window/8_6_vp.txt"
-nl_path = "data/8_floors_wall/test_window/8_6_nl.txt"
-np_path = "data/8_floors_wall/test_window/8_6_np.txt"
+processor = BatchCrossPointProcessor(
+    input_dir="data/8_floors_wall/scan_2336_filt",
+    output_dir="data/8_floors_wall/output/scan_2336_filt",
+    extensions=(".las", ".laz", ".txt"),
+    max_ellipsoid_axis=0.005,   # например 5 см
+    eps=0.05,
+    show_scans=False,
+    choose_scan_directly_from_dbscan=False,
+    mse_threshold=0.0001,
+    max_iteration=20,
+    k_sigma=2.0,
+    base_fitter=PlaneL1Fitter,
+)
 
-# vl_path = "data/8_floors_wall/test_window/2_3_vl.txt"
-# vp_path = "data/8_floors_wall/test_window/2_3_vp.txt"
-# nl_path = "data/8_floors_wall/test_window/2_3_nl.txt"
-# np_path = "data/8_floors_wall/test_window/2_3_np.txt"
+result = processor.run()
 
-window_pathes = [vl_path, vp_path, nl_path, np_path]
+df_all = result["df_all"]
+df_good = result["df_good"]
+df_good_filtered = result["df_good_filtered"]
+df_errors = result["df_errors"]
 
-planes = []
-cpoints = []
-for path in window_pathes:
-    cpe = CrossPointExacter(file_path=path,
-                            choose_scan_directly_from_dbscan=False,
-                            show_scans=False,
-                            eps=0.05)
-    cpe.calculate_planes()
-    planes.append(cpe.planes)
-    # for plane in cpe.planes:
-    #     print(plane)
-    point, status = cpe.calculate_intersect_point()
-    cpoints.append((point, status))
-    res_str = cpe.get_result_str()
-
-for idx in range(len(cpoints)):
-    print(*planes[idx], sep="\n")
-    print("\t", *cpoints[idx], "\n============================")
+print("Всего обработано:", len(df_all))
+print("Хороших точек:", len(df_good))
+print("Хороших после фильтра по эллипсоиду:", len(df_good_filtered))
+print("Ошибок:", len(df_errors))
