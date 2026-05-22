@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from collections import defaultdict
 from typing import List
 
-import numpy as np
 import pandas as pd
 
 
@@ -181,12 +180,12 @@ class RejectedLengthPointAnalyzer:
 
 
 if __name__ == "__main__":
-    from app.util.CrossPointListRestorer import CrossPointListRestorer
-    from app.util.CrossPointSegmentSet import CrossPointSegmentSet
-    from app.util.LengthDeformationResult import SegmentLengthDeformationAnalyzer
+    from app.cross_points.CrossPointListRestorer import CrossPointListRestorer
+    from app.cross_points.CrossPointSegmentSet import CrossPointSegmentSet
+    from app.deformation.SegmentLengthDeformationAnalyzer import SegmentLengthDeformationAnalyzer
 
-    points_path_epoch1 = "/Users/mikhail_vystrchil/Documents/MY_PROGRAMMS/PointlessDeForm/data/8_floors_wall/output/total_scan/cross_points_good_filtered_by_ellipsoid.csv"
-    points_path_epoch2 = "/Users/mikhail_vystrchil/Documents/MY_PROGRAMMS/PointlessDeForm/data/8_floors_wall/output/scan_2335_filt/cross_points_good_filtered_by_ellipsoid.csv"
+    points_path_epoch1 = "/data/8_floors_wall/output/total_scan/cross_points_good_filtered_by_ellipsoid.csv"
+    points_path_epoch2 = "/data/8_floors_wall/output/scan_2335_filt/cross_points_good_filtered_by_ellipsoid.csv"
 
     points1 = CrossPointListRestorer(points_path_epoch1).restore_all()
     points2 = CrossPointListRestorer(points_path_epoch2).restore_all()

@@ -1,4 +1,3 @@
-import os
 import json
 import logging
 import traceback
@@ -10,7 +9,7 @@ from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from app.base.scan.plane_fitters.PlaneL1Fitter import PlaneL1Fitter
-from app.util.CrossPointExacter import CrossPointExacter
+from app.cross_points.CrossPointExacter import CrossPointExacter
 
 logger = logging.getLogger(__name__)
 

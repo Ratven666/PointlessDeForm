@@ -257,9 +257,9 @@ class CrossPointSegment:
 
 
 if __name__ == "__main__":
-    from app.util.CrossPointListRestorer import CrossPointListRestorer
+    from app.cross_points.CrossPointListRestorer import CrossPointListRestorer
 
-    points_path = "/Users/mikhail_vystrchil/Documents/MY_PROGRAMMS/PointlessDeForm/data/8_floors_wall/output/scan_2334_filt/cross_points_good_filtered_by_ellipsoid.csv"
+    points_path = "/data/8_floors_wall/output/scan_2334_filt/cross_points_good_filtered_by_ellipsoid.csv"
 
     base_points_restorer = CrossPointListRestorer(points_path)
     base_points = base_points_restorer.restore_all()

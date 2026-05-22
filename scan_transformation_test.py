@@ -1,6 +1,6 @@
 from app.base.scan.Scan import Scan
-from app.util.CrossPointListRestorer import CrossPointListRestorer
-from app.util.PointCloudRegistrator import PointCloudRegistrator
+from app.cross_points.CrossPointListRestorer import CrossPointListRestorer
+from app.base.scan.PointCloudRegistrator import PointCloudRegistrator
 
 base_points_path = "data/8_floors_wall/output/scan_2335_filt/cross_points_good_filtered_by_ellipsoid.csv"
 moving_point_path_l = "data/8_floors_wall/output/scan_2334_filt/cross_points_good_filtered_by_ellipsoid.csv"

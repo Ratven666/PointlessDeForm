@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from app.util.CrossPoint import CrossPoint
+from app.cross_points.CrossPoint import CrossPoint
 
 
 class CrossPointListRestorer:
@@ -154,7 +154,7 @@ class CrossPointListRestorer:
 
 
 if __name__ == "__main__":
-    csv_path = "/Users/mikhail_vystrchil/Documents/MY_PROGRAMMS/PointlessDeForm/data/8_floors_wall/output/scan_2334_filt/cross_points_good_filtered_by_ellipsoid.csv"
+    csv_path = "/data/8_floors_wall/output/scan_2334_filt/cross_points_good_filtered_by_ellipsoid.csv"
 
     restorer = CrossPointListRestorer(csv_path)
 

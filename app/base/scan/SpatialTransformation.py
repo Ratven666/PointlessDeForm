@@ -82,7 +82,7 @@ class SpatialTransformation:
         Принимает list[CrossPoint], возвращает новый list[CrossPoint]
         с трансформированными координатами и перенесённой ковариацией.
         """
-        from app.util.CrossPoint import CrossPoint
+        from app.cross_points.CrossPoint import CrossPoint
 
         result = []
         for p in points:

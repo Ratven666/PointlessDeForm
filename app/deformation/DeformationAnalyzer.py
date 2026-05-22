@@ -1,12 +1,9 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
 import pandas as pd
 from scipy import stats
-
-from app.util.CrossPointSegment import CrossPointSegment
-from app.util.CrossPointSegmentSet import CrossPointSegmentSet
 
 
 @dataclass
@@ -334,10 +331,10 @@ class DeformationAnalyzer:
 if __name__ == "__main__":
     from tabulate import tabulate
 
-    from app.util.CrossPointListRestorer import CrossPointListRestorer
+    from app.cross_points.CrossPointListRestorer import CrossPointListRestorer
 
-    path_epoch1 = "/Users/mikhail_vystrchil/Documents/MY_PROGRAMMS/PointlessDeForm/data/8_floors_wall/output/total_scan/cross_points_good_filtered_by_ellipsoid.csv"
-    path_epoch2 = "/Users/mikhail_vystrchil/Documents/MY_PROGRAMMS/PointlessDeForm/data/8_floors_wall/output/scan_2335_filt/cross_points_good_filtered_by_ellipsoid.csv"
+    path_epoch1 = "/data/8_floors_wall/output/total_scan/cross_points_good_filtered_by_ellipsoid.csv"
+    path_epoch2 = "/data/8_floors_wall/output/scan_2335_filt/cross_points_good_filtered_by_ellipsoid.csv"
 
     points_e1 = CrossPointListRestorer(path_epoch1).restore_all()
     points_e2 = CrossPointListRestorer(path_epoch2).restore_all()

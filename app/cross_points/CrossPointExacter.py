@@ -11,7 +11,7 @@ from app.base.scan.plane_fitters.PlaneL1Fitter import PlaneL1Fitter
 from app.base.scan.plotters.ScanPlotterWithLabelsMPL import ScanPlotterWithLabelsMPL
 from app.base.scan.utils.ScanNormalsDirectionClassifier import ScanNormalsDirectionClassifier
 from app.base.scan.utils.ScanSplitterByLabels import ScanSplitterByLabels
-from app.util.CrossPoint import CrossPoint
+from app.cross_points.CrossPoint import CrossPoint
 
 logger = logging.getLogger(__name__)
 
