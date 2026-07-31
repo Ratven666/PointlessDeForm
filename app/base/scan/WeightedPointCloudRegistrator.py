@@ -418,3 +418,22 @@ class WeightedPointCloudRegistrator:
             )
             lines.append(f"    {n:20s}  w={w:.6f}  {sigma_str}")
         logger.info("\n".join(lines))
+
+
+if __name__ == "__main__":
+    epoch1_cross_points = ...
+    epoch2_cross_points = ...
+
+
+    reg = WeightedPointCloudRegistrator(
+        base_points=epoch1_cross_points,
+        transform_points=epoch2_cross_points,
+        method="LSM",
+        k_sigma=3.0,
+        missing_cov_strategy="median",  # для точек без надёжной ковариации
+    )
+    transform = reg.compute()
+    print(transform)
+
+    # Трансформировать эпоху 2 → систему эпохи 1 (с переносом ковариаций)
+    transformed_points = transform.transform_points(epoch2_cross_points)
