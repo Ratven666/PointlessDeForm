@@ -15,6 +15,7 @@ class SpatialTransformation:
         R          – матрица вращения (3×3)
         t          – вектор трансляции (3,)
         T          – однородная матрица (4×4): [[R | t], [0 | 1]]
+        T_matrix   – alias для T (совместимость)
         method     – метод оценки: 'LSM' или 'L1'
         n_common   – число общих точек
         n_used     – число точек, использованных в оценке
@@ -48,6 +49,12 @@ class SpatialTransformation:
 
         self.omega, self.phi, self.kappa = self._rotation_to_angles(self.R)
         self.tx, self.ty, self.tz = self.t
+
+    # ------------------------------------------------------------------
+    @property
+    def T_matrix(self) -> np.ndarray:
+        """Alias для T — однородная матрица 4×4 (обратная совместимость)."""
+        return self.T
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -127,6 +134,45 @@ class SpatialTransformation:
             rotate_normals=rotate_normals,
             scan_name=scan_name,
         )
+
+    # ------------------------------------------------------------------
+    def to_dict(self) -> dict:
+        """Сериализует трансформацию в словарь (для JSON/pickle)."""
+        return {
+            "method":       self.method,
+            "n_common":     self.n_common,
+            "n_used":       self.n_used,
+            "rmse_m":       self.rmse,
+            "mae_m":        self.mae,
+            "max_res_m":    self.max_res,
+            "rotation_deg": {
+                "omega": float(np.rad2deg(self.omega)),
+                "phi":   float(np.rad2deg(self.phi)),
+                "kappa": float(np.rad2deg(self.kappa)),
+            },
+            "translation_mm": {
+                "tx": float(self.tx * 1000),
+                "ty": float(self.ty * 1000),
+                "tz": float(self.tz * 1000),
+            },
+            "R_matrix": self.R.tolist(),
+            "T_matrix": self.T.tolist(),
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> SpatialTransformation:
+        """Восстанавливает объект из словаря (например, загруженного из JSON)."""
+        T = np.asarray(d["T_matrix"], dtype=float)
+        R = T[:3, :3]
+        t = T[:3, 3]
+        # residuals не сохраняются — восстанавливаем нулевой вектор нужной длины
+        n_used = d.get("n_used", 1)
+        rmse = d.get("rmse_m", 0.0)
+        fake_residuals = np.full(n_used, rmse)
+        return cls(R=R, t=t, method=d["method"],
+                   n_common=d.get("n_common", n_used),
+                   n_used=n_used,
+                   residuals=fake_residuals)
 
     # ------------------------------------------------------------------
     def __str__(self):
