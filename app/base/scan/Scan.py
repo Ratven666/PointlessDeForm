@@ -1,0 +1,182 @@
+from app.base.Point import Point
+from app.base.scan.ScanPoint import ScanPoint
+from app.base.scan.exporters.ScanExportersToTxt import ScanExportersToTxt
+from app.base.scan.parsers.ScanParserFactory import ScanParserFactory
+from app.base.scan.plotters.ScanPlotterMPL import ScanPlotterMPL
+from app.base.scan.utils.ScanNormalsCalculator import ScanNormalsCalculator
+
+
+class Scan:
+
+    def __init__(self, scan_name: str):
+        self.name = scan_name
+        self._points = []
+        self.borders = {"x_min": None,
+                        "x_max": None,
+                        "y_min": None,
+                        "y_max": None,
+                        "z_min": None,
+                        "z_max": None,
+                        }
+
+    def __len__(self):
+        return len(self._points)
+
+    def __iter__(self):
+        return iter(self._points)
+
+    def __str__(self):
+        return f"{self.__class__.__name__} (scan_name={self.name}, num_of_point={len(self)}, borders={self.borders})"
+
+    def add_point(self, point, color=(0, 0, 0)):
+        if isinstance(point, ScanPoint):
+            self._points.append(point)
+            self.borders = self._check_border(borders_dict=self.borders, point=point)
+        elif isinstance(point, Point):
+            s_point = ScanPoint(x=point.x,
+                                y=point.y,
+                                z=point.z,
+                                color=color)
+            self.add_point(s_point)
+        return self
+
+    def compute_normals(self, *args, normals_calculator=ScanNormalsCalculator, **kwargs):
+        snc = normals_calculator(scan=self)
+        normals =snc.compute_normals(*args, **kwargs)
+        return normals
+
+    def import_points_from_file(self, file_path, parser=ScanParserFactory, compute_normals=True):
+        parser = parser(file_path)
+        parser.parse(scan=self)
+        if compute_normals:
+            self.compute_normals()
+        return self
+
+    def export_points_from_file(self, file_path, parser=ScanExportersToTxt):
+        parser = parser(file_path)
+        parser.export(scan=self)
+
+    def filter_scan(self, filter_cls, *args, replace_points_in_scan=True, **kwargs):
+        filter = filter_cls(*args, **kwargs)
+        filtered_points = filter.filter(scan=self)
+        if replace_points_in_scan:
+            self._points = filtered_points
+            f_scan = self
+        else:
+            f_scan_name = f"{self.name}_filtered"
+            f_scan = Scan(scan_name=f_scan_name)
+            f_scan._points = filtered_points
+        f_scan.borders = self._get_borders_dict(f_scan._points)
+        return f_scan
+
+    def plot(self, *args, plotter=ScanPlotterMPL, **kwargs):
+        plotter = plotter(*args, **kwargs)
+        fig_ax = plotter.plot(scan=self)
+        return fig_ax
+
+    @staticmethod
+    def _check_border(borders_dict, point):
+        if borders_dict["x_min"] is None:
+            borders_dict = {"x_min": point.x,
+                            "x_max": point.x,
+                            "y_min": point.y,
+                            "y_max": point.y,
+                            "z_min": point.z,
+                            "z_max": point.z,
+                            }
+        if point.x < borders_dict["x_min"]:
+            borders_dict["x_min"] = point.x
+        if point.y < borders_dict["y_min"]:
+            borders_dict["y_min"] = point.y
+        if point.z < borders_dict["z_min"]:
+            borders_dict["z_min"] = point.z
+        if point.x > borders_dict["x_max"]:
+            borders_dict["x_max"] = point.x
+        if point.y > borders_dict["y_max"]:
+            borders_dict["y_max"] = point.y
+        if point.z > borders_dict["z_max"]:
+            borders_dict["z_max"] = point.z
+        return borders_dict
+
+    def _get_borders_dict(self, points_lst):
+        borders = {"x_min": None, "x_max": None,
+                   "y_min": None, "y_max": None,
+                   "z_min": None, "z_max": None,
+                   }
+        for point in points_lst:
+            borders = self._check_border(borders_dict=borders,
+                                         point=point)
+        return borders
+
+    def transform_scan(self, transformation, inplace=False, rotate_normals=True, scan_name=None):
+        """
+        Применяет пространственную трансформацию ко всем точкам скана.
+
+        Parameters
+        ----------
+        transformation : SpatialTransformation
+            Объект с полями R (3x3) и t (3,).
+        inplace : bool
+            Если True, изменяет текущий Scan.
+            Если False, возвращает новый Scan.
+        rotate_normals : bool
+            Если True, поворачивает normals у ScanPoint через R.
+        scan_name : str | None
+            Имя нового скана, если inplace=False.
+
+        Returns
+        -------
+        Scan
+            Трансформированный скан.
+        """
+        import numpy as np
+
+        R = np.asarray(transformation.R, dtype=float)
+        t = np.asarray(transformation.t, dtype=float)
+
+        if inplace:
+            target_scan = self
+            target_scan._points = []
+            target_scan.borders = {
+                "x_min": None, "x_max": None,
+                "y_min": None, "y_max": None,
+                "z_min": None, "z_max": None,
+            }
+        else:
+            target_scan = Scan(scan_name or f"{self.name}_transformed")
+
+        for point in self:
+            xyz = np.array([point.x, point.y, point.z], dtype=float)
+            xyz_new = R @ xyz + t
+
+            normals_new = None
+            if rotate_normals and getattr(point, "normals", None) is not None:
+                normals = np.asarray(point.normals, dtype=float)
+                normals_new = R @ normals
+
+                norm = np.linalg.norm(normals_new)
+                if norm > 0:
+                    normals_new = normals_new / norm
+
+            new_point = ScanPoint(
+                x=float(xyz_new[0]),
+                y=float(xyz_new[1]),
+                z=float(xyz_new[2]),
+                color=getattr(point, "color", (0, 0, 0)),
+                normals=normals_new,
+            )
+            target_scan.add_point(new_point)
+
+        return target_scan
+
+
+if __name__ == "__main__":
+    scan = Scan("l1")
+    # print(scan)
+    scan.import_points_from_file(file_path=r"../../../src/L1.las")
+    # print(scan)
+
+    scan.plot(plotter=ScanPlotterMPL)
+
+    for point in scan:
+         print(point)
