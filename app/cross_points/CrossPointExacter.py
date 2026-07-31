@@ -131,8 +131,17 @@ class CrossPointExacter:
             if show_scans:
                 scan.plot(plotter=ScanPlotterWithLabelsMPL)
             scans = ScanSplitterByLabels(scan).split()
+            if not scans:
+                raise ValueError(f"После DBSCAN не осталось кластеров в скане '{scan.name}'")
             if label is None:
-                label = float(input("Number_of_claster? (int): "))
+                # Автоматически выбираем крупнейший кластер
+                label = max(scans, key=lambda lbl: len(list(scans[lbl])))
+                logger.debug("Авто-выбор кластера %s для скана '%s'", label, scan.name)
+            if label not in scans:
+                raise KeyError(
+                    f"Кластер {label} не найден в скане '{scan.name}'. "
+                    f"Доступные: {sorted(scans.keys())}"
+                )
             return scans[label]
 
         scans = ScanSplitterByLabels(self.base_scan).split()
