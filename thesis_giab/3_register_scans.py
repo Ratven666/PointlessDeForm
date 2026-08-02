@@ -19,7 +19,8 @@ RESULTS_DIR  = BASE_DIR / "output" / "registration"
 CSV_FILENAME = "cross_points_good_filtered_by_ellipsoid.csv"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
-FOLDERS      = ["1", "2"]
+# FOLDERS      = ["1", "2"]
+FOLDERS      = ["all"]
 METHOD       = "LSM"    # 'LSM' или 'L1'
 K_SIGMA      = 3.0
 MIN_COMMON   = 3        # минимум общих точек для регистрации пары

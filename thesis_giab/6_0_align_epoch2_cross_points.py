@@ -18,12 +18,21 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 # ──────────────────────────────────────────────────────────────────────
 
-BASE_DATA_DIR = Path("../data/8_floors_dvor")
-CROSS_DIR     = BASE_DATA_DIR / "output" / "merged_cross_points"
+# BASE_DATA_DIR = Path("../data/8_floors_dvor")
+BASE_DATA_DIR = Path("../data/8_floors_2")
+# CROSS_DIR     = BASE_DATA_DIR / "output" / "merged_cross_points"
+CROSS_DIR     = BASE_DATA_DIR / "output" / "cross_points"
 
 # Входные CSV с хорошими (отфильтрованными) кросс-точками обеих эпох
-CSV_EPOCH_1 = CROSS_DIR / "1" / "cross_points_good_filtered_by_ellipsoid.csv"
-CSV_EPOCH_2 = CROSS_DIR / "2" / "cross_points_good_filtered_by_ellipsoid.csv"
+# CSV_EPOCH_0 = CROSS_DIR / "all" / "cross_points_good_filtered_by_ellipsoid.csv"
+# CSV_EPOCH_1 = CROSS_DIR / "1" / "cross_points_good_filtered_by_ellipsoid.csv"
+# CSV_EPOCH_2 = CROSS_DIR / "2" / "cross_points_good_filtered_by_ellipsoid.csv"
+
+# CSV_EPOCH_1 = CROSS_DIR / "0_1" / "scan_2335" / "cross_points_good_filtered_by_ellipsoid.csv"
+# CSV_EPOCH_2 = CROSS_DIR / "0_2" / "367_o_las" / "cross_points_good_filtered_by_ellipsoid.csv"
+
+CSV_EPOCH_1 = CROSS_DIR / "1" / "367_o_las" / "cross_points_good_filtered_by_ellipsoid.csv"
+CSV_EPOCH_2 = CROSS_DIR / "2" / "368_o_las" / "cross_points_good_filtered_by_ellipsoid.csv"
 
 # Куда кладём результаты выравнивания
 OUTPUT_DIR = CROSS_DIR / "aligned"
@@ -120,9 +129,11 @@ def main():
 
     # ── 1. Загружаем кросс-точки обеих эпох ──────────────────────────
     logger.info("Загрузка кросс-точек эпохи 1 (базовая)...")
+    # pts_epoch1 = load_cross_points(CSV_EPOCH_0)
     pts_epoch1 = load_cross_points(CSV_EPOCH_1)
 
     logger.info("Загрузка кросс-точек эпохи 2 (трансформируемая)...")
+    # pts_epoch2 = load_cross_points(CSV_EPOCH_1)
     pts_epoch2 = load_cross_points(CSV_EPOCH_2)
 
     # ── 2. Проверяем пересечение по именам ───────────────────────────

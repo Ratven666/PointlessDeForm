@@ -47,7 +47,8 @@ BASE_DIR       = Path("../data/8_floors_dvor")
 SUBSCANS_DIR   = BASE_DIR / "output" / "subscans"
 REG_DIR        = BASE_DIR / "output" / "registration"
 MERGED_DIR     = BASE_DIR / "output" / "merged"
-FOLDERS        = ["1", "2"]
+# FOLDERS        = ["1", "2"]
+FOLDERS        = ["all"]
 SCAN_EXTENSION = {".las", ".laz", ".txt", ".xyz", ".pts"}
 
 

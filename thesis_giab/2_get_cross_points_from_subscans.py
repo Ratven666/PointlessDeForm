@@ -14,9 +14,14 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 # ──────────────────────────────────────────────
 
-SUBSCANS_DIR   = Path("../data/8_floors_dvor/output/subscans")
-OUTPUT_BASE    = Path("../data/8_floors_dvor/output/cross_points")
+# SUBSCANS_DIR   = Path("../data/8_floors_dvor/output/subscans")
+# OUTPUT_BASE    = Path("../data/8_floors_dvor/output/cross_points")
+SUBSCANS_DIR   = Path("../data/8_floors_2/output/subscans")
+OUTPUT_BASE    = Path("../data/8_floors_2/output/cross_points")
+
 SCAN_DIRS      = ["1", "2"]
+# SCAN_DIRS      = ["all"]
+# SCAN_DIRS      = ["0_1", "0_2"]
 
 PROCESSOR_CONFIG = dict(
     extensions        = (".las", ".laz", ".txt", ".xyz", ".pts"),

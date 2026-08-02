@@ -29,6 +29,10 @@ MERGED_SCANS = {
     "2": BASE_DATA_DIR / "output" / "merged" / "2" / "epoch_2_full.txt",
 }
 
+# MERGED_SCANS = {
+#     "all": BASE_DATA_DIR / "output" / "merged" / "all" / "epoch_all_full.txt",
+# }
+
 SUBSCANS_DIR = BASE_DATA_DIR / "output" / "merged_subscans"
 CROSS_DIR    = BASE_DATA_DIR / "output" / "merged_cross_points"
 

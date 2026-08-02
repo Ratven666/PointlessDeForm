@@ -20,11 +20,13 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 # ──────────────────────────────────────────────
 
-BASE_DATA_DIR = Path("../data/8_floors_dvor")
+# BASE_DATA_DIR = Path("../data/8_floors_dvor")
+BASE_DATA_DIR = Path("../data/8_floors_2")
 POINTS_FILE   = BASE_DATA_DIR / "vse_tochki.txt"
 OUTPUT_DIR    = BASE_DATA_DIR / "output" / "subscans"
 CUBE_SIZE     = 0.5
 SCAN_DIRS     = ["1", "2"]
+# SCAN_DIRS     = ["0_1", "0_2"]
 EXTENSIONS    = {".las", ".laz", ".txt", ".xyz", ".pts"}
 
 

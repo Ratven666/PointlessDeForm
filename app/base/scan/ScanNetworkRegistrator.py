@@ -41,7 +41,6 @@ import numpy as np
 
 from app.base.scan.IterativeRegistrator import IterativeRegistrator
 from app.base.scan.SpatialTransformation import SpatialTransformation
-from app.base.scan.WeightedPointCloudRegistrator import WeightedPointCloudRegistrator
 
 logger = logging.getLogger(__name__)
 
